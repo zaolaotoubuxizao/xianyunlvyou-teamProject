@@ -1,9 +1,9 @@
 <template>
-  <div style="height:1000px">
+  <div>
     <el-row type="flex" justify="space-between" class="nav">
       <el-col>
         <el-autocomplete
-          v-model="city"
+          v-model="info.city"
           :fetch-suggestions="querySearchAsync"
           placeholder="请输入内容"
           @select="handleSelect"
@@ -117,7 +117,7 @@
             </el-col>
           </el-row>
         </el-col>
-        <el-col :span="10">
+        <el-col :span="10" style="z-index:1;">
           <div id="container" style="width:100%; height: 100%;"></div>
         </el-col>
       </el-row>
@@ -142,7 +142,7 @@
               v-model="condition.levels"
               multiple
               collapse-tags
-              style="margin-left: 20px;"
+              style="margin-right: 15px;"
               placeholder="不限"
             >
               <el-option
@@ -161,7 +161,7 @@
               v-model="condition.types"
               multiple
               collapse-tags
-              style="margin-left: 20px;"
+              style="margin-right: 15px;"
               placeholder="不限"
             >
               <el-option
@@ -180,7 +180,7 @@
               v-model="condition.assets"
               multiple
               collapse-tags
-              style="margin-left: 20px;"
+              style="margin-right: 15px;"
               placeholder="不限"
             >
               <el-option
@@ -199,7 +199,7 @@
               v-model="condition.brands"
               multiple
               collapse-tags
-              style="margin-left: 20px;"
+              style="margin-right: 15px;"
               placeholder="不限"
             >
               <el-option
@@ -220,9 +220,11 @@
 export default {
   data() {
     return {
-      city: "",
       time: "",
-      options: [{ value: "1" }, { value: "2" }],
+      info:{
+        city: "南京市",
+        id: ""
+      },
       adult: [1, 2, 3, 4, 5, 6, 7],
       child: [0, 1, 2, 3, 4],
       form: {
@@ -238,51 +240,28 @@ export default {
         types: [], // 酒店类型
         assets: [], // 酒店设施
         brands: [] // 酒店品牌
-      },
-      options: [
-        {
-          value: "选项1",
-          label: "黄金糕"
-        },
-        {
-          value: "选项2",
-          label: "双皮奶"
-        },
-        {
-          value: "选项3",
-          label: "蚵仔煎"
-        },
-        {
-          value: "选项4",
-          label: "龙须面"
-        },
-        {
-          value: "选项5",
-          label: "北京烤鸭"
-        }
-      ],
-      value11: []
+      }
     };
   },
   mounted() {
     this.$axios({
       url: "/hotels"
     }).then(res => {
-      console.log(res);
+      // console.log(res);
     });
     this.$axios({
       url: "/hotels/options"
     }).then(res => {
       this.conditions = res.data.data;
-      console.log(this.conditions);
+      // console.log(this.conditions);
     });
     this.$axios({
       url: "/cities",
       params: {
-        name: "南京市"
+        name: this.info.city
       }
     }).then(res => {
-      // console.log(res.data.data[0]);
+      console.log(res.data.data[0]);
       this.cities = res.data.data[0];
     });
     window.onLoad = function() {
@@ -342,7 +321,7 @@ export default {
             return v;
           });
 
-          this.city = newData[0].value;
+          this.info.city = newData[0].value;
           resolve(newData);
         });
       });
@@ -350,14 +329,37 @@ export default {
     async querySearchAsync(value, cb) {
       const res = await this.querySearchCity(value);
 
-      // if (res.length > 0) {
-      //   this.form.departCity = res[0].value;
-      //   this.form.departCode = res[0].sort;
-      // }
+      if (res.length > 0) {
+        this.info.id = res[0].id;
+        this.info.city = res[0].name;
+        this.$axios({
+          url: "/cities",
+          params: {
+            name: this.info.city
+          }
+        }).then(res => {
+          console.log(res.data.data[0]);
+          this.cities = res.data.data[0];
+        });
+        this.$emit("changeinfo", this.info);
+      }
 
       cb(res);
     },
-    handleSelect(item) {},
+    handleSelect(item) {
+      this.info.id = item.id;
+      this.info.city = item.name;
+      this.$axios({
+          url: "/cities",
+          params: {
+            name: this.info.city
+          }
+        }).then(res => {
+          console.log(res.data.data[0]);
+          this.cities = res.data.data[0];
+        });
+      this.$emit("changeid", this.info);
+    },
     formatTooltip(val) {
       return val * 40;
     }
@@ -384,7 +386,8 @@ export default {
   position: absolute;
   top: 150px;
   left: 832px;
-  z-index: 999;
+  z-index: 2;
+  background-color: #fff;
   .el-button {
     float: right;
     margin-right: 10px;
@@ -418,13 +421,18 @@ export default {
 }
 .huo {
   margin-right: 10px;
-  margin-top: 10px;
+  margin-top: 20px;
   border: 1px solid #ccc;
+  border-radius: 5px;
   .el-row {
     margin: 5px;
   }
   .el-col {
     border-right: 1px solid #ccc;
+  }
+  .el-col:last-child {
+    border-right: none;
+    margin-right: 0px;
   }
 }
 </style>
