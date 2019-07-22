@@ -1,49 +1,111 @@
 <template>
-    <div style="padding: 50px">
-
-        <div id="container" style="width:500px; height: 500px;"></div>
-
+  <div class="container">
+    <!-- 面包屑 -->
+    <el-breadcrumb separator-class="el-icon-arrow-right" class="nav">
+      <el-breadcrumb-item>酒店</el-breadcrumb-item>
+      <el-breadcrumb-item>{{name}}酒店预订</el-breadcrumb-item>
+    </el-breadcrumb>
+    <!-- 搜索栏 -->
+    <HotelFilters @changeinfo="changeinfo" />
+    <!-- 酒店列表 -->
+    <HotelItem v-for="(item,index) in newList" :key="index" :data="item" />
+    <!-- 无数据是显示 -->
+    <div v-if="newList.length == 0" style="text-align:center;height:100px;line-height:100px;">暂无符合条件的酒店</div>
+    <!-- 分页 -->
+    <div class="block" style="height:80px;" v-if="newList.length != 0">
+      <el-pagination layout="prev, pager, next" :page-size="pagesize" :current-page="page" @current-change="change" :total="total" style="float:right;margin-top:20px;"></el-pagination>
     </div>
+  </div>
 </template>
 
 <script>
+import HotelFilters from "@/components/hotel/hotelFilters";
+import HotelItem from "@/components/hotel/hotelItem";
 export default {
-  mounted() {
-    window.onLoad = function() {
-      // 等待页面加载完成之后才执行
-      // container是页面的div容器
-      var map = new AMap.Map("container", {
-        zoom: 11, //级别
-        center: [118.8718107, 31.32846821], //中心点坐标
-        viewMode: "3D" //使用3D视图
-      });
-
-      // 创建一个 Marker 实例：
-      var marker1 = new AMap.Marker({
-        content: `<div style="width:20px; height:20px; background: red; text-align: center; line-height:20px">1</div>`,
-        position: new AMap.LngLat(118.8618107, 31.33846821), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
-        title: "北京"
-      });
-
-      var marker2 = new AMap.Marker({
-        position: new AMap.LngLat(118.8718117, 31.32846811), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
-        title: "北京"
-      });
-
-      // 将创建的点标记添加到已有的地图实例：
-      map.add([marker1, marker2]);
+  components: {
+    HotelFilters,
+    HotelItem
+  },
+  data() {
+    return {
+      total: 0,
+      page: 1,
+      pagesize: 2,
+      info: {
+        city: "74",
+        // enterTime:'2019-06-12',
+        // leftTime:'2019-07-15',
+        _limit: "10",
+        _start: "0"
+      },
+      name: "南京市",
+      dataList: [],
+      newList: [],
+      oldList: [],
+      hotellevel: {
+        level: 0
+      }
     };
-
-    var key = "2c047e1737fe327f243ea9bd2d627c3c";
-    var url = `https://webapi.amap.com/maps?v=1.4.15&key=${key}&callback=onLoad`;
-
-    var jsapi = document.createElement("script");
-    jsapi.charset = "utf-8";
-    jsapi.src = url;
-    document.head.appendChild(jsapi);
+  },
+  mounted() {
+    this.$axios({
+      url: "/hotels",
+      params: this.info
+    }).then(res => {
+      this.dataList = res.data.data;
+      // this.dataList.forEach(v => {
+      //   if (!v.hotellevel) {
+      //     v.hotellevel = this.hotellevel;
+      //   }
+      // });
+      this.newList = [...this.dataList].slice(
+        (this.page - 1) * this.pagesize,
+        this.page * this.pagesize
+      );
+      this.total = this.dataList.length;
+    });
+  },
+  methods: {
+    change(index) {
+      this.page = index;
+      this.oldList = [...this.dataList];
+      this.newList = this.oldList.slice(
+        (this.page - 1) * this.pagesize,
+        this.page * this.pagesize
+      );
+      console.log(this.newList);
+    },
+    changeinfo(fo) {
+      this.info.city = fo.id;
+      this.name = fo.city;
+      this.$axios({
+        url: "/hotels",
+        params: this.info
+      }).then(res => {
+        this.dataList = res.data.data;
+        // this.dataList.forEach(v => {
+        //   if (!v.hotellevel) {
+        //     v.hotellevel = this.hotellevel;
+        //   }
+        // });
+        this.newList = [...this.dataList].slice(
+          (this.page - 1) * this.pagesize,
+          this.page * this.pagesize
+        );
+        this.total = this.dataList.length;
+      });
+    }
   }
 };
 </script>
 
-<style>
+<style lang="less" scoped>
+.container {
+  width: 1000px;
+  margin: 0 auto;
+  .nav {
+    margin-top: 20px;
+  }
+}
 </style>
+
