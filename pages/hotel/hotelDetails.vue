@@ -4,12 +4,12 @@
     <!-- 面包屑 -->
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item :to="{ path: '/' }">酒店</el-breadcrumb-item>
-      <el-breadcrumb-item :to="{ path: '/' }">南京酒店</el-breadcrumb-item>
-      <el-breadcrumb-item>好来阁商务宾馆</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/' }">{{hotelData.real_city}}酒店</el-breadcrumb-item>
+      <el-breadcrumb-item>{{hotelData.name}}</el-breadcrumb-item>
     </el-breadcrumb>
     <!-- 宾馆标题部分 -->
     <el-row class="title">
-      <span class="title_txt">好来阁商务宾馆</span>
+      <span class="title_txt">{{hotelData.name}}</span>
       <span class="tiele_xingxing">
         <i class="iconfont iconhuangguan"></i>
         <i class="iconfont iconhuangguan"></i>
@@ -19,10 +19,10 @@
       </span>
     </el-row>
 
-    <el-row class="eg">hao lai ge shang wu hotel</el-row>
+    <el-row class="eg">{{hotelData.alias}}</el-row>
     <el-row class="position_txt">
       <i class="iconfont iconlocation"></i>
-      <el-col>高淳县淳溪镇镇兴路118号(高淳县委党校对面)</el-col>
+      <el-col>{{hotelData.address}}</el-col>
     </el-row>
 
     <!-- 宾馆图片部分 -->
@@ -58,13 +58,13 @@
       <el-col>基本信息</el-col>
       <el-col class="jl">入住时间：14:00之后</el-col>
       <el-col>离店时间：12:00之前</el-col>
-      <el-col>2011年开业/2011年装修</el-col>
-      <el-col>酒店规模：63间客房</el-col>
+      <el-col>{{hotelData.creation_time}}/{{hotelData.renovat_time}}</el-col>
+      <el-col>酒店规模：{{hotelData.roomCount}}间客房</el-col>
     </el-row>
     <el-row class="hotel_installation">
       <el-col :span='5'>主要设施</el-col>
       <el-col :span='19'>
-        <span class="font_sty">wifi</span>
+        <span class="font_sty" v-for='(item,index) in hotelassets' :key='index'>{{item.name}}</span>
       </el-col>
     </el-row>
     <el-row class="hotel_park">
@@ -101,21 +101,21 @@
           <el-progress type="circle" :percentage="75" :show-text='false' color='#ff9900' width='74' stroke-width='2'></el-progress>
           <el-col class="circle_text2">
             <el-row>环境</el-row>
-            <el-row>7.3</el-row>
+            <el-row>8.6</el-row>
           </el-col>
         </el-col>
         <el-col>
           <el-progress type="circle" :percentage="75" :show-text='false' color='#ff9900' width='74' stroke-width='2'></el-progress>
           <el-col class="circle_text3">
-            <el-row>环境</el-row>
-            <el-row>7.3</el-row>
+            <el-row>产品</el-row>
+            <el-row>8.9</el-row>
           </el-col>
         </el-col>
         <el-col>
           <el-progress type="circle" :percentage="75" :show-text='false' color='#ff9900' width='74' stroke-width='2'></el-progress>
           <el-col class="circle_text4">
-            <el-row>环境</el-row>
-            <el-row>7.3</el-row>
+            <el-row>服务</el-row>
+            <el-row>8.7</el-row>
           </el-col>
         </el-col>
       </el-col>
@@ -123,7 +123,7 @@
 
     <!-- 评论组件 -->
     <div class="remark">
-      评论部分
+      <UserComment/>
     </div>
 
   </div>
@@ -131,32 +131,22 @@
 
 <script>
 import Map from "@/components/hotel/map";
+import UserComment from "@/components/hotel/userComment";
 export default {
   components: {
-    Map
+    Map,
+    UserComment
   },
   data() {
     return {
+      // 酒店数据源
+      hotelData: [],
       // 只读星星评分
       value: 3.5,
       // 宾馆价格来源数据源
-      products: [
-        {
-          name: "携程",
-          bestType: "高级大床房A",
-          price: "524"
-        },
-        {
-          name: "携程",
-          price: "524",
-          bestType: "高级大床房A"
-        },
-        {
-          name: "携程",
-          price: "524",
-          bestType: "高级大床房A"
-        }
-      ],
+      products: [],
+      // 宾馆设施数据
+      hotelassets: [],
       // 默认展示的图片
       default_img: " http://157.122.54.189:9093/images/hotel-pics/1.jpeg",
       data_img: [
@@ -186,6 +176,19 @@ export default {
     clk(index) {
       this.default_img = this.$refs.dataImg[index].src;
     }
+  },
+  mounted() {
+    this.$axios({
+      url: "/hotels",
+      params: { id: this.$route.query.id }
+    }).then(res => {
+      this.hotelData = res.data.data[0];
+      // 价格来源
+      this.products = res.data.data[0].products;
+      // 酒店设施
+      this.hotelassets = res.data.data[0].hotelassets;
+      console.log(this.hotelData);
+    });
   }
 };
 </script>
@@ -267,6 +270,8 @@ export default {
   .font_sty {
     background-color: #eee;
     padding: 5px 10px 5px 10px;
+
+    margin: 5px 10px;
   }
 }
 .hotel_park {
@@ -342,8 +347,7 @@ export default {
 }
 
 .remark {
-  background-color: orange;
-  height: 1000px;
+  height: 500px;
 }
 </style>
 
